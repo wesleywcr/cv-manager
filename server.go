@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"gihub.com/wesleywcr/cv-manager/config"
+	"gihub.com/wesleywcr/cv-manager/db"
 	"gihub.com/wesleywcr/cv-manager/generated"
 	"gihub.com/wesleywcr/cv-manager/resolvers"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -15,9 +15,14 @@ import (
 )
 
 func main() {
-	port := os.Getenv("PORT")
+	env := config.GetEnv()
+	port := env.Port
 	if port == "" {
 		port = config.DEFAULT_PORT
+	}
+	db, error := db.New(env.DBName)
+	if error != nil {
+		log.Fatal((error))
 	}
 
 	router := chi.NewRouter()
@@ -31,7 +36,7 @@ func main() {
 		),
 	)
 
-	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &resolvers.Resolver{}}))
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &resolvers.Resolver{DB: db}}))
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)

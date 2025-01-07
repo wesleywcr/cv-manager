@@ -10,11 +10,30 @@ import (
 
 	"gihub.com/wesleywcr/cv-manager/generated"
 	"gihub.com/wesleywcr/cv-manager/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var collectionName = "basic-info"
 
 // CreateBasicInfo is the resolver for the createBasicInfo field.
 func (r *mutationResolver) CreateBasicInfo(ctx context.Context, basicInfo model.BasicInfoInput) (*model.BasicInfo, error) {
-	panic(fmt.Errorf("not implemented: CreateBasicInfo - createBasicInfo"))
+	colletion := r.DB.Collection(collectionName)
+
+	newID := primitive.NewObjectID()
+	newBasicInfo := model.BasicInfo{
+		ID:             newID.Hex(),
+		FirstName:      basicInfo.FirstName,
+		LastName:       basicInfo.LastName,
+		AdditionalName: *basicInfo.AdditionalName,
+		Pronouns:       basicInfo.Pronouns,
+		Headline:       basicInfo.Headline,
+	}
+	_, err := colletion.InsertOne(ctx, newBasicInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &newBasicInfo, nil
+
 }
 
 // UpdateBasicInfo is the resolver for the updateBasicInfo field.
